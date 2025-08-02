@@ -4,6 +4,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"golang-clean-architecture/internal/delivery/http"
@@ -36,7 +37,11 @@ func Bootstrap(config *BootstrapConfig) {
 	contactProducer := messaging.NewContactProducer(config.Producer, config.Log)
 	addressProducer := messaging.NewAddressProducer(config.Producer, config.Log)
 
-	tokenUtil := util.NewTokenUtil("rahasia,jangan,ada,yang,tahu")
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+		DB:   0,
+	})
+	tokenUtil := util.NewTokenUtil("rahasia,jangan,ada,yang,tahu", redisClient)
 
 	// setup use cases
 	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, userProducer, tokenUtil)

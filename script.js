@@ -32,7 +32,7 @@ export function setup() {
 export default function () {
     const url = 'http://localhost:3000/api/hello';
     const headers = {
-        'Authorization': 'be0e0147-df8d-4b6d-a2d6-f2ba3c8e2bec',
+        'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmUiOjE3NTY3MTkzNzcwOTEsImlkIjoiZWtvIn0.qDKbc_IYO8kOcG7csbbzYF3QmS5mMVdbkkUyF1qdmjg',
         'Content-Type': 'application/json',
     };
 

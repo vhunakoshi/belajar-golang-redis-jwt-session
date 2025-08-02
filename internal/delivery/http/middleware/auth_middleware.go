@@ -18,7 +18,7 @@ func NewAuth(userUserCase *usecase.UserUseCase, tokenUtil *util.TokenUtil) fiber
 		//	return fiber.ErrUnauthorized
 		//}
 
-		auth, err := tokenUtil.ParseToken(request.Token)
+		auth, err := tokenUtil.ParseToken(ctx.UserContext(), request.Token)
 		if err != nil {
 			userUserCase.Log.Warnf("Failed find user by token : %+v", err)
 			return fiber.ErrUnauthorized
