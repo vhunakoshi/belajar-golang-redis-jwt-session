@@ -12,6 +12,7 @@ import (
 	"golang-clean-architecture/internal/gateway/messaging"
 	"golang-clean-architecture/internal/repository"
 	"golang-clean-architecture/internal/usecase"
+	"golang-clean-architecture/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -35,8 +36,10 @@ func Bootstrap(config *BootstrapConfig) {
 	contactProducer := messaging.NewContactProducer(config.Producer, config.Log)
 	addressProducer := messaging.NewAddressProducer(config.Producer, config.Log)
 
+	tokenUtil := util.NewTokenUtil("rahasia,jangan,ada,yang,tahu")
+
 	// setup use cases
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, userProducer)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, userProducer, tokenUtil)
 	contactUseCase := usecase.NewContactUseCase(config.DB, config.Log, config.Validate, contactRepository, contactProducer)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, contactRepository, addressRepository, addressProducer)
 
@@ -47,7 +50,7 @@ func Bootstrap(config *BootstrapConfig) {
 	helloController := http.NewHelloController()
 
 	// setup middleware
-	authMiddleware := middleware.NewAuth(userUseCase)
+	authMiddleware := middleware.NewAuth(userUseCase, tokenUtil)
 
 	routeConfig := route.RouteConfig{
 		App:               config.App,
