@@ -44,6 +44,7 @@ func Bootstrap(config *BootstrapConfig) {
 	userController := http.NewUserController(userUseCase, config.Log)
 	contactController := http.NewContactController(contactUseCase, config.Log)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
+	helloController := http.NewHelloController()
 
 	// setup middleware
 	authMiddleware := middleware.NewAuth(userUseCase)
@@ -54,6 +55,7 @@ func Bootstrap(config *BootstrapConfig) {
 		ContactController: contactController,
 		AddressController: addressController,
 		AuthMiddleware:    authMiddleware,
+		HelloController:   helloController,
 	}
 	routeConfig.Setup()
 }

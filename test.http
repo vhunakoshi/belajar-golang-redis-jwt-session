@@ -6,3 +6,18 @@ Content-Type: application/json
   "id": "eko",
   "password": "eko"
 }
+
+###
+
+POST http://localhost:3000/api/users/_login
+Content-Type: application/json
+
+{
+  "id": "eko",
+  "password": "eko"
+}
+
+###
+
+GET http://localhost:3000/api/hello
+Authorization: be0e0147-df8d-4b6d-a2d6-f2ba3c8e2bec
