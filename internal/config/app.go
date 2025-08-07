@@ -4,7 +4,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"golang-clean-architecture/internal/delivery/http"
@@ -13,7 +12,6 @@ import (
 	"golang-clean-architecture/internal/gateway/messaging"
 	"golang-clean-architecture/internal/repository"
 	"golang-clean-architecture/internal/usecase"
-	"golang-clean-architecture/internal/util"
 	"gorm.io/gorm"
 )
 
@@ -33,18 +31,18 @@ func Bootstrap(config *BootstrapConfig) {
 	addressRepository := repository.NewAddressRepository(config.Log)
 
 	// setup producer
-	userProducer := messaging.NewUserProducer(config.Producer, config.Log)
-	contactProducer := messaging.NewContactProducer(config.Producer, config.Log)
-	addressProducer := messaging.NewAddressProducer(config.Producer, config.Log)
+	var userProducer *messaging.UserProducer
+	var contactProducer *messaging.ContactProducer
+	var addressProducer *messaging.AddressProducer
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-		DB:   0,
-	})
-	tokenUtil := util.NewTokenUtil("rahasia,jangan,ada,yang,tahu", redisClient)
+	if config.Producer != nil {
+		userProducer = messaging.NewUserProducer(config.Producer, config.Log)
+		contactProducer = messaging.NewContactProducer(config.Producer, config.Log)
+		addressProducer = messaging.NewAddressProducer(config.Producer, config.Log)
+	}
 
 	// setup use cases
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, userProducer, tokenUtil)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, userProducer)
 	contactUseCase := usecase.NewContactUseCase(config.DB, config.Log, config.Validate, contactRepository, contactProducer)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, contactRepository, addressRepository, addressProducer)
 
@@ -52,10 +50,9 @@ func Bootstrap(config *BootstrapConfig) {
 	userController := http.NewUserController(userUseCase, config.Log)
 	contactController := http.NewContactController(contactUseCase, config.Log)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
-	helloController := http.NewHelloController()
 
 	// setup middleware
-	authMiddleware := middleware.NewAuth(userUseCase, tokenUtil)
+	authMiddleware := middleware.NewAuth(userUseCase)
 
 	routeConfig := route.RouteConfig{
 		App:               config.App,
@@ -63,7 +60,6 @@ func Bootstrap(config *BootstrapConfig) {
 		ContactController: contactController,
 		AddressController: addressController,
 		AuthMiddleware:    authMiddleware,
-		HelloController:   helloController,
 	}
 	routeConfig.Setup()
 }
