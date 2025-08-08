@@ -2,15 +2,19 @@ package usecase
 
 import (
 	"context"
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+
 	"golang-clean-architecture/internal/entity"
 	"golang-clean-architecture/internal/gateway/messaging"
 	"golang-clean-architecture/internal/model"
 	"golang-clean-architecture/internal/model/converter"
 	"golang-clean-architecture/internal/repository"
+	"golang-clean-architecture/internal/util"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+
+	//"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -21,16 +25,18 @@ type UserUseCase struct {
 	Validate       *validator.Validate
 	UserRepository *repository.UserRepository
 	UserProducer   *messaging.UserProducer
+	TokenUtil      *util.TokenUtil
 }
 
 func NewUserUseCase(db *gorm.DB, logger *logrus.Logger, validate *validator.Validate,
-	userRepository *repository.UserRepository, userProducer *messaging.UserProducer) *UserUseCase {
+	userRepository *repository.UserRepository, userProducer *messaging.UserProducer, tokenUtil *util.TokenUtil) *UserUseCase {
 	return &UserUseCase{
 		DB:             db,
 		Log:            logger,
 		Validate:       validate,
 		UserRepository: userRepository,
 		UserProducer:   userProducer,
+		TokenUtil:      tokenUtil,
 	}
 }
 
@@ -135,29 +141,37 @@ func (c *UserUseCase) Login(ctx context.Context, request *model.LoginUserRequest
 		return nil, fiber.ErrUnauthorized
 	}
 
-	user.Token = uuid.New().String()
-	if err := c.UserRepository.Update(tx, user); err != nil {
-		c.Log.Warnf("Failed save user : %+v", err)
+	//user.Token = uuid.New().String()
+	//if err := c.UserRepository.Update(tx, user); err != nil {
+	//	c.Log.Warnf("Failed save user : %+v", err)
+	//	return nil, fiber.ErrInternalServerError
+	//}
+	//
+	//if err := tx.Commit().Error; err != nil {
+	//	c.Log.Warnf("Failed commit transaction : %+v", err)
+	//	return nil, fiber.ErrInternalServerError
+	//}
+	//
+	//if c.UserProducer != nil {
+	//	event := converter.UserToEvent(user)
+	//	c.Log.Info("Publishing user login event")
+	//	if err := c.UserProducer.Send(event); err != nil {
+	//		c.Log.Warnf("Failed publish user login event : %+v", err)
+	//		return nil, fiber.ErrInternalServerError
+	//	}
+	//} else {
+	//	c.Log.Info("Kafka producer is disabled, skipping user login event")
+	//}
+
+	token, err := c.TokenUtil.CreateToken(ctx, &model.Auth{ID: user.ID})
+	if err != nil {
+		c.Log.Warnf("Failed create token : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
-	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
-		return nil, fiber.ErrInternalServerError
-	}
-
-	if c.UserProducer != nil {
-		event := converter.UserToEvent(user)
-		c.Log.Info("Publishing user login event")
-		if err := c.UserProducer.Send(event); err != nil {
-			c.Log.Warnf("Failed publish user login event : %+v", err)
-			return nil, fiber.ErrInternalServerError
-		}
-	} else {
-		c.Log.Info("Kafka producer is disabled, skipping user login event")
-	}
-
-	return converter.UserToTokenResponse(user), nil
+	return converter.UserToTokenResponse(&entity.User{
+		Token: token,
+	}), nil
 }
 
 func (c *UserUseCase) Current(ctx context.Context, request *model.GetUserRequest) (*model.UserResponse, error) {

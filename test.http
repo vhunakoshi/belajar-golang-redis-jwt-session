@@ -2,9 +2,9 @@ POST http://localhost:3000/api/users
 Content-Type: application/json
 
 {
-  "name" : "Eko",
-  "id": "eko",
-  "password": "eko"
+  "name" : "Taufiq Vhunakoshi",
+  "id": "vhunakoshi",
+  "password": "password123"
 }
 
 ###
@@ -13,11 +13,11 @@ POST http://localhost:3000/api/users/_login
 Content-Type: application/json
 
 {
-  "id": "eko",
-  "password": "eko"
+  "id": "vhunakoshi",
+  "password": "password123"
 }
 
 ###
 
 GET http://localhost:3000/api/hello
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmUiOjE3NTY3MjA2ODExODAsImlkIjoiZWtvIn0.5p-1fMk8uHqU0n6Z_QDZsS1zaCu5I5D0jJT6_Ad3WgM
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmUiOjE3NTcyMzUwMjc1OTYsImlkIjoidmh1bmFrb3NoaSJ9.Pd3NMUF2FfaavefUlV_1NWaRTW36xRP-L2C8uOXdG88

@@ -32,7 +32,7 @@ export function setup() {
 export default function () {
     const url = 'http://localhost:3000/api/hello';
     const headers = {
-        'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmUiOjE3NTY3MjA2ODExODAsImlkIjoiZWtvIn0.5p-1fMk8uHqU0n6Z_QDZsS1zaCu5I5D0jJT6_Ad3WgM',
+        'Authorization': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHBpcmUiOjE3NTcyMzUwMjc1OTYsImlkIjoidmh1bmFrb3NoaSJ9.Pd3NMUF2FfaavefUlV_1NWaRTW36xRP-L2C8uOXdG88',
         'Content-Type': 'application/json',
     };
 

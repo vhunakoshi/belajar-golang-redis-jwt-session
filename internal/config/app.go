@@ -1,17 +1,20 @@
 package config
 
 import (
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"golang-clean-architecture/internal/delivery/http"
 	"golang-clean-architecture/internal/delivery/http/middleware"
 	"golang-clean-architecture/internal/delivery/http/route"
 	"golang-clean-architecture/internal/gateway/messaging"
 	"golang-clean-architecture/internal/repository"
 	"golang-clean-architecture/internal/usecase"
+	"golang-clean-architecture/internal/util"
+
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"gorm.io/gorm"
 )
 
@@ -41,8 +44,14 @@ func Bootstrap(config *BootstrapConfig) {
 		addressProducer = messaging.NewAddressProducer(config.Producer, config.Log)
 	}
 
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+		DB:   0,
+	})
+	tokenUtil := util.NewTokenUtil("nusapay2025", redisClient)
+
 	// setup use cases
-	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, userProducer)
+	userUseCase := usecase.NewUserUseCase(config.DB, config.Log, config.Validate, userRepository, userProducer, tokenUtil)
 	contactUseCase := usecase.NewContactUseCase(config.DB, config.Log, config.Validate, contactRepository, contactProducer)
 	addressUseCase := usecase.NewAddressUseCase(config.DB, config.Log, config.Validate, contactRepository, addressRepository, addressProducer)
 
@@ -50,15 +59,17 @@ func Bootstrap(config *BootstrapConfig) {
 	userController := http.NewUserController(userUseCase, config.Log)
 	contactController := http.NewContactController(contactUseCase, config.Log)
 	addressController := http.NewAddressController(addressUseCase, config.Log)
+	helloController := http.NewHelloController()
 
 	// setup middleware
-	authMiddleware := middleware.NewAuth(userUseCase)
+	authMiddleware := middleware.NewAuth(userUseCase, tokenUtil)
 
 	routeConfig := route.RouteConfig{
 		App:               config.App,
 		UserController:    userController,
 		ContactController: contactController,
 		AddressController: addressController,
+		HelloController:   helloController,
 		AuthMiddleware:    authMiddleware,
 	}
 	routeConfig.Setup()
